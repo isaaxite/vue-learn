@@ -35,6 +35,11 @@ export function initMixin (Vue: Class<Component>) {
       // internal component options needs special treatment.
       initInternalComponent(vm, options)
     } else {
+      /**
+       * mergeOptions
+       * Merge two option objects into a new one.
+       * Core utility used in both instantiation and inheritance.
+       */
       vm.$options = mergeOptions(
         resolveConstructorOptions(vm.constructor),
         options || {},

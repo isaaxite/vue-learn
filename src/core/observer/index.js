@@ -4,7 +4,7 @@ import Dep from './dep'
 import VNode from '../vdom/vnode'
 import { arrayMethods } from './array'
 import {
-  def,
+  def,  // Define a property.
   warn,
   hasOwn,
   hasProto,
@@ -43,11 +43,15 @@ export class Observer {
     this.value = value
     this.dep = new Dep()
     this.vmCount = 0
+    // Define a property.
+    // 在新建一个Observer实例时（劫持一个对象/数组，value）就将当前这个实例挂载到被劫持的对象/数组上
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
       if (hasProto) {
         protoAugment(value, arrayMethods)
       } else {
+        // 如果没有__proto__，说明不能通过__proto__设置原型指向！
+        // 则直接将变异的数组方法作为OwnProperty直接挂载在数组上
         copyAugment(value, arrayMethods, arrayKeys)
       }
       this.observeArray(value)
@@ -108,11 +112,16 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
  * or the existing observer if the value already has one.
  */
 export function observe (value: any, asRootData: ?boolean): Observer | void {
+  // 递归（Recursion）控制流
   if (!isObject(value) || value instanceof VNode) {
     return
   }
   let ob: Observer | void
-  if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
+  // value had own __ob__
+  if (
+    hasOwn(value, '__ob__')
+    && value.__ob__ instanceof Observer
+  ) {
     ob = value.__ob__
   } else if (
     shouldObserve &&
@@ -123,6 +132,8 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
   ) {
     ob = new Observer(value)
   }
+
+
   if (asRootData && ob) {
     ob.vmCount++
   }
@@ -137,9 +148,9 @@ export function defineReactive (
   key: string,
   val: any,
   customSetter?: ?Function,
-  shallow?: boolean
+  shallow?: boolean   // 是否单层（浅层，无后代属性）进行数据减持
 ) {
-  const dep = new Dep()
+  const dep = new Dep(key);
 
   const property = Object.getOwnPropertyDescriptor(obj, key)
   if (property && property.configurable === false) {
@@ -153,16 +164,20 @@ export function defineReactive (
     val = obj[key]
   }
 
+  // observe 中存在递归（recursion）控制流：判断是否未 Object
   let childOb = !shallow && observe(val)
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     get: function reactiveGetter () {
+      l(`get [key:${key}] val`, 'target:', Dep.target);
       const value = getter ? getter.call(obj) : val
       if (Dep.target) {
-        dep.depend()
+        l('dep.depend()');
+        dep.depend(key)
         if (childOb) {
-          childOb.dep.depend()
+          l('childOb.dep.depend()')
+          childOb.dep.depend(key)
           if (Array.isArray(value)) {
             dependArray(value)
           }
@@ -187,6 +202,10 @@ export function defineReactive (
       } else {
         val = newVal
       }
+      // !shallow（浅的） 如果是false，就饭会 （!shallow）的值
+      // observe的返回值是Observer | void！如果newVal不是Array或Object的话，就会饭会void（undefined）
+      // 加入是上面两种情况就表示 childOb就会被智控
+      // 加入是Object/Array的话，就会继续去深层坚持这个引用类型数据
       childOb = !shallow && observe(newVal)
       dep.notify()
     }
@@ -199,8 +218,10 @@ export function defineReactive (
  * already exist.
  */
 export function set (target: Array<any> | Object, key: any, val: any): any {
-  if (process.env.NODE_ENV !== 'production' &&
-    (isUndef(target) || isPrimitive(target))
+  if (
+    process.env.NODE_ENV !== 'production'
+    // undefined || 值类型（原始类型）数据
+    && (isUndef(target) || isPrimitive(target))
   ) {
     warn(`Cannot set reactive property on undefined, null, or primitive value: ${(target: any)}`)
   }
@@ -209,11 +230,13 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     target.splice(key, 1, val)
     return val
   }
+  // 对象原有属性，直接赋值！这个对象有两种情况 $data本身、$data的子属性或后代属性 和 非$data 对象
   if (key in target && !(key in Object.prototype)) {
     target[key] = val
     return val
   }
   const ob = (target: any).__ob__
+  // warn: 不应该使用 $set 设置 vue实例 和 $data 的成员属性
   if (target._isVue || (ob && ob.vmCount)) {
     process.env.NODE_ENV !== 'production' && warn(
       'Avoid adding reactive properties to a Vue instance or its root $data ' +
@@ -221,10 +244,12 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     )
     return val
   }
+  // 被设置的对象没有被观测（劫持）
   if (!ob) {
     target[key] = val
     return val
   }
+  // 新增属性
   defineReactive(ob.value, key, val)
   ob.dep.notify()
   return val

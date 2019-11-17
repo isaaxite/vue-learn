@@ -28,7 +28,7 @@ export default class Watcher {
   expression: string;
   cb: Function;
   id: number;
-  deep: boolean;
+  deep: boolean;  // 是否深层 watch
   user: boolean;
   lazy: boolean;
   sync: boolean;
@@ -52,6 +52,8 @@ export default class Watcher {
     this.vm = vm
     if (isRenderWatcher) {
       vm._watcher = this
+      l('updateComponent:', expOrFn)
+
     }
     vm._watchers.push(this)
     // options
@@ -75,6 +77,7 @@ export default class Watcher {
     this.expression = process.env.NODE_ENV !== 'production'
       ? expOrFn.toString()
       : ''
+    l('expression:', this.expression)
     // parse expression for getter
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn

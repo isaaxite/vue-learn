@@ -3,6 +3,10 @@
 const validDivisionCharRE = /[\w).+\-_$\]]/
 
 export function parseFilters (exp: string): string {
+  let logCount = 0;
+  const log = (...rest) => {
+    console.log(20191110, 'parseFilters', ++logCount, ...rest);
+  };
   let inSingle = false
   let inDouble = false
   let inTemplateString = false
@@ -16,6 +20,7 @@ export function parseFilters (exp: string): string {
   for (i = 0; i < exp.length; i++) {
     prev = c
     c = exp.charCodeAt(i)
+    log(c);
     if (inSingle) {
       if (c === 0x27 && prev !== 0x5C) inSingle = false
     } else if (inDouble) {

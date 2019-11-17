@@ -88,7 +88,27 @@ export function renderMixin (Vue: Class<Component>) {
       // separately from one another. Nested component's render fns are called
       // when parent component is patched.
       currentRenderingInstance = vm
+      l('11 render:', render, typeof render)
+      // vnode = (function(ctx) {
+      //   console.log(Math.random(), '_v(info.name)', ctx._v("\n    "+ctx._s(ctx.info.name)+"\n    "))
+      //   return ctx._c('main', {
+      //     attrs:  {"id":"app"}},
+      //     [
+      //       ctx._v("\n    "+ctx._s(ctx.info.name)+"\n    "),
+      //       ctx._c('span',  {
+      //         domProps:{ "textContent": ctx._s(ctx.info.age) }
+      //       }),
+      //       ctx._v(" "),
+      //       ctx._m(0)
+      //     ]
+      //   );
+      // })(vm._renderProxy)
+
+      
+      l('vm._renderProxy', vm._renderProxy)
       vnode = render.call(vm._renderProxy, vm.$createElement)
+      // vnode = sr.call(vm._renderProxy, vm.$createElement)
+      l('vnode', vnode);
     } catch (e) {
       handleError(e, vm, `render`)
       // return error render result,
@@ -124,6 +144,6 @@ export function renderMixin (Vue: Class<Component>) {
     }
     // set parent
     vnode.parent = _parentVnode
-    return vnode
+    return vnode;
   }
 }

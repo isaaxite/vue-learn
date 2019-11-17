@@ -26,6 +26,7 @@ import {
  * how to merge a parent option value and a child option
  * value into the final value.
  */
+// strats(策略)
 const strats = config.optionMergeStrategies
 
 /**

@@ -309,6 +309,7 @@ export function parse (
     },
 
     chars (text: string, start: number, end: number) {
+      l('chars:', text);
       if (!currentParent) {
         if (process.env.NODE_ENV !== 'production') {
           if (text === template) {
@@ -352,6 +353,7 @@ export function parse (
       }
       if (text) {
         if (!inPre && whitespaceOption === 'condense') {
+          l(1)
           // condense consecutive whitespaces into single space
           text = text.replace(whitespaceRE, ' ')
         }
@@ -364,7 +366,9 @@ export function parse (
             tokens: res.tokens,
             text
           }
+          l(2, 'res:', res, 'child:', child);
         } else if (text !== ' ' || !children.length || children[children.length - 1].text !== ' ') {
+          l(3)
           child = {
             type: 3,
             text
@@ -372,10 +376,12 @@ export function parse (
         }
         if (child) {
           if (process.env.NODE_ENV !== 'production' && options.outputSourceRange) {
+            l(5)
             child.start = start
             child.end = end
           }
           children.push(child)
+          l(4, 'children:', children)
         }
       }
     },

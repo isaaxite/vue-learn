@@ -141,6 +141,7 @@ export function parseHTML (html, options) {
       }
 
       if (options.chars && text) {
+        l('chars1');
         options.chars(text, index - text.length, index)
       }
     } else {
@@ -158,6 +159,7 @@ export function parseHTML (html, options) {
           text = text.slice(1)
         }
         if (options.chars) {
+          l('chars2');
           options.chars(text)
         }
         return ''
@@ -168,6 +170,7 @@ export function parseHTML (html, options) {
     }
 
     if (html === last) {
+      l('chars3');
       options.chars && options.chars(html)
       if (process.env.NODE_ENV !== 'production' && !stack.length && options.warn) {
         options.warn(`Mal-formatted tag at end of template: "${html}"`, { start: index + html.length })

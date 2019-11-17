@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>vue-test</title>
+</head>
+<body>
+  <main id="app" class="testArr">
+    <!-- <span>{{ info.name }}</span> -->
+    <!-- <span v-once>{{info.static}}</span> -->
+    <!-- <span>{{computedAttr}}</span> -->
+    <span>{{ price|keep2Point }}</span>
+  </main>
+<script src="./seqload.js"></script>
+<script>
+  var seqload = new Seqload(['../dist/vue.js']);
+  seqload.init(function() {
+    var vm = new Vue({
+      data: {
+        info: {
+          static: 'static render',
+          name: 'isaac',
+          age: 26
+        },
+        nums: [1,2,3],
+        count: 1,
+        price: 100,
+      },
+      filters: {
+        keep2Point(age) {
+          return age.toFixed(2);
+        }
+      },
+      computed: {
+        computedAttr() {
+          const {info} = this;
+          // const infoStr = JSON.stringify(this.info);
+          return info;
+        }
+      },
+      mounted() {
+        this.$nextTick(() => {
+          // 初始化的computedWatcher.dirty = true， 所以先访问一下计算属性，计算最新值，让dirty = false
+          const {computedAttr} = this;
+          // 使用$set添加新属性
+          // this.$set(this.info, 'ex', 'exData');
+          // computedWatcher.dirty output: true
+
+          // 使用$set修改成员值
+          // this.$set(this.info, 'name', 'frank');
+          // computedWatcher.dirty output: false
+
+          // 掉操作符添加新属性
+          // this.info.ex = 'exData';
+          // computedWatcher.dirty output: false
+
+          this.$set(this.$data, 'count', 2);
+
+          // const foo = {name: '2'};
+          // this.$set(foo, 'name', 'isaac');
+
+          // console.log(computedAttr);
+          console.log(Date.now(), 'isDirty:', vm['_watchers'][0].dirty);
+        });
+      },
+    }).$mount('#app');
+    console.log(vm);
+  });
+</script>
+</body>
+</html>
+ 

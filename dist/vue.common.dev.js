@@ -1037,6 +1037,7 @@ function defineReactive$$1 (
       if (Dep.target) {
         dep.depend();
         if (childOb) {
+          console.log('childOb: ', childOb);
           childOb.dep.depend();
           if (Array.isArray(value)) {
             dependArray(value);
@@ -1156,6 +1157,7 @@ function dependArray (value) {
  * value into the final value.
  */
 var strats = config.optionMergeStrategies;
+console.log('config.optionMergeStrategies: ', JSON.parse(JSON.stringify(config.optionMergeStrategies)));
 
 /**
  * Options with restrictions
@@ -5416,7 +5418,7 @@ function initGlobalAPI (Vue) {
 }
 
 initGlobalAPI(Vue);
-
+console.log(JSON.parse(JSON.stringify(Vue.options)));
 Object.defineProperty(Vue.prototype, '$isServer', {
   get: isServerRendering
 });

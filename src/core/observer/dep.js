@@ -15,9 +15,10 @@ export default class Dep {
   id: number;
   subs: Array<Watcher>;
 
-  constructor () {
+  constructor (key) {
     this.id = uid++
     this.subs = []
+    this.key = key;
   }
 
   addSub (sub: Watcher) {
@@ -28,8 +29,10 @@ export default class Dep {
     remove(this.subs, sub)
   }
 
-  depend () {
+  depend (...rest) {
+    l('depend', rest, this);
     if (Dep.target) {
+      l(`Dep.target(${Dep.target.id}).addDep(dep(${this.id}))`)
       Dep.target.addDep(this)
     }
   }
