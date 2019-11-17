@@ -91,6 +91,7 @@ export function genElement (el: ASTElement, state: CodegenState): string {
     for (let i = 0; i < state.transforms.length; i++) {
       code = state.transforms[i](el, code)
     }
+    l('code:', code)
     return code
   }
 }
@@ -533,10 +534,13 @@ function genNode (node: ASTNode, state: CodegenState): string {
 }
 
 export function genText (text: ASTText | ASTExpression): string {
-  return `_v(${text.type === 2
+  l('genText:', text);
+  const code = `_v(${text.type === 2
     ? text.expression // no need for () because already wrapped in _s()
     : transformSpecialNewlines(JSON.stringify(text.text))
   })`
+  l('code:', code)
+  return code
 }
 
 export function genComment (comment: ASTText): string {

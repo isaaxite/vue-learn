@@ -21,6 +21,7 @@ export function parseText (
   text: string,
   delimiters?: [string, string]
 ): TextParseResult | void {
+  console.log(20191110, 'parseText', 1, arguments);
   const tagRE = delimiters ? buildRegex(delimiters) : defaultTagRE
   if (!tagRE.test(text)) {
     return
@@ -37,6 +38,7 @@ export function parseText (
       tokens.push(JSON.stringify(tokenValue))
     }
     // tag token
+    console.log(20191110, 'parseText', 2, match);
     const exp = parseFilters(match[1].trim())
     tokens.push(`_s(${exp})`)
     rawTokens.push({ '@binding': exp })

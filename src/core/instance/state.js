@@ -143,7 +143,9 @@ function initData (vm: Component) {
         `Use prop default value instead.`,
         vm
       )
-    } else if (!isReserved(key)) {
+    }
+    // Check if a string starts with $ or _
+    else if (!isReserved(key)) {
       proxy(vm, `_data`, key)
     }
   }
@@ -245,7 +247,9 @@ function createComputedGetter (key) {
       if (watcher.dirty) {
         watcher.evaluate()
       }
+      l('Dep.target:', !!Dep.target)
       if (Dep.target) {
+        l(1, 'watcher.depend()')
         watcher.depend()
       }
       return watcher.value

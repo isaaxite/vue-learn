@@ -23,8 +23,11 @@ const methodsToPatch = [
  */
 methodsToPatch.forEach(function (method) {
   // cache original method
+  // mutator(突变子)
+  // original数组方法，非变异，而是原始数组方法
   const original = arrayProto[method]
   def(arrayMethods, method, function mutator (...args) {
+    // 在被调用的时候this这个上下文就指向了调用此方法的数组
     const result = original.apply(this, args)
     const ob = this.__ob__
     let inserted
@@ -34,6 +37,8 @@ methodsToPatch.forEach(function (method) {
         inserted = args
         break
       case 'splice':
+        // 如果是新增，args.slice(2)取出要增加的元素
+        // 如果是删除，inserted是 []
         inserted = args.slice(2)
         break
     }

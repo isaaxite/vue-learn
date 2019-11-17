@@ -13,7 +13,7 @@ const idToTemplate = cached(id => {
   const el = query(id)
   return el && el.innerHTML
 })
-
+// global $mount(./runtime/index)
 const mount = Vue.prototype.$mount
 Vue.prototype.$mount = function (
   el?: string | Element,
@@ -98,4 +98,40 @@ function getOuterHTML (el: Element): string {
 
 Vue.compile = compileToFunctions
 
+window.l = function() {
+  var args = Array.prototype.slice.call(arguments, 0);
+  for (var i = 0, len = args.length; i < len; i += 1) {
+    var arg = args[i];
+    try {
+      if (typeof arg === 'object' && arg !== null) {
+        args[i] = JSON.parse(JSON.stringify(arg));
+      }
+    } catch (error) {
+      console.error('catch error');
+    }
+  }
+  console.log.apply(null, args);
+}
+
+
+// window._sr = function() {
+//   with (this) {
+//     l('_v(info.name): ', _v("\n    "+_s(info.name)+"\n    "));
+//     return _c('main',
+//       {
+//         attrs: {
+//           "id": "app"
+//         }
+//       },
+//       [
+//         _v("\n    "+_s(info.name)+"\n    "),
+//         _c('span', {
+//           domProps: { "textContent":_s(info.age) }
+//         }),
+//         _v(" "),
+//         _m(0)
+//       ]
+//     )
+//   }
+// };
 export default Vue
