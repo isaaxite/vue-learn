@@ -51,6 +51,7 @@ export function _createElement (
   children?: any,
   normalizationType?: number
 ): VNode | Array<VNode> {
+  const log = (...rest) => console.log(Date.now(), `_createElement-${rest.shift()}`, ...rest)
   if (isDef(data) && isDef((data: any).__ob__)) {
     process.env.NODE_ENV !== 'production' && warn(
       `Avoid using observed data object as vnode data: ${JSON.stringify(data)}\n` +
@@ -124,13 +125,17 @@ export function _createElement (
     // direct component options / constructor
     vnode = createComponent(tag, data, context, children)
   }
+  log('vnode:', vnode);
   if (Array.isArray(vnode)) {
+    log('if', 1);
     return vnode
   } else if (isDef(vnode)) {
+    log('if', 2);
     if (isDef(ns)) applyNS(vnode, ns)
     if (isDef(data)) registerDeepBindings(data)
     return vnode
   } else {
+    log('if', 3);
     return createEmptyVNode()
   }
 }

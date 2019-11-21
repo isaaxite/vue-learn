@@ -11,7 +11,22 @@
     <!-- <span>{{ info.name }}</span> -->
     <!-- <span v-once>{{info.static}}</span> -->
     <!-- <span>{{computedAttr}}</span> -->
-    <span>{{ price|keep2Point }}</span>
+    <span
+      data-attr-01="1"
+      data-attr-02="2"
+      data-attr-03="3"
+      :data-attr-04="3"
+      class="class-01"
+      :class="class02"
+      id="id-01"
+      v-for="(num, idx) of nums"
+      :key="idx"
+      @click="test"
+      :text="class02"
+    >
+      {{ price|keep2Point }}
+      <strong>asdasdsa</strong>
+    </span>
   </main>
 <script src="./seqload.js"></script>
 <script>
@@ -27,6 +42,7 @@
         nums: [1,2,3],
         count: 1,
         price: 100,
+        class02: 'class-02'
       },
       filters: {
         keep2Point(age) {
@@ -65,10 +81,17 @@
           console.log(Date.now(), 'isDirty:', vm['_watchers'][0].dirty);
         });
       },
+
+      methods: {
+        test() {
+          console.log('test method');
+        }
+      },
     }).$mount('#app');
     console.log(vm);
   });
 </script>
 </body>
 </html>
+
  
