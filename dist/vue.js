@@ -33,6 +33,7 @@
 
   /**
    * Check if value is primitive.
+   * 检查值是否为原始值。
    */
   function isPrimitive (value) {
     return (
@@ -3415,6 +3416,12 @@
     children,
     normalizationType
   ) {
+    var log = function () {
+      var rest = [], len = arguments.length;
+      while ( len-- ) rest[ len ] = arguments[ len ];
+
+      return console.log.apply(console, [ Date.now(), ("_createElement-" + (rest.shift())) ].concat( rest ));
+    };
     if (isDef(data) && isDef((data).__ob__)) {
        warn(
         "Avoid using observed data object as vnode data: " + (JSON.stringify(data)) + "\n" +
@@ -3488,13 +3495,17 @@
       // direct component options / constructor
       vnode = createComponent(tag, data, context, children);
     }
+    log('vnode:', vnode);
     if (Array.isArray(vnode)) {
+      log('if', 1);
       return vnode
     } else if (isDef(vnode)) {
+      log('if', 2);
       if (isDef(ns)) { applyNS(vnode, ns); }
       if (isDef(data)) { registerDeepBindings(data); }
       return vnode
     } else {
+      log('if', 3);
       return createEmptyVNode()
     }
   }
@@ -5898,9 +5909,22 @@
     return (
       a.key === b.key && (
         (
+          // 标签相同
           a.tag === b.tag &&
+
+          // 都是注释元素, 或都不是
           a.isComment === b.isComment &&
+
+          // idDef = (v) => v !== undefined && v !== null
+          // 都定义了，或都没有定义
           isDef(a.data) === isDef(b.data) &&
+
+          // 1. 两节点的type相同，
+          //   i. type存在, 且相同；
+          //   ii. 两个type都没有定义，都是undefined；a、b都算是通过
+          // 2. a、b节点type都是'text,number,password,search,email,tel,url'中之一
+          // 换言之 a.type = text, b.type = password，也可以说两个input节点相同
+          // 3. a不是input标签
           sameInputType(a, b)
         ) || (
           isTrue(a.isAsyncPlaceholder) &&
@@ -5912,10 +5936,12 @@
   }
 
   function sameInputType (a, b) {
+    // 表明这个函数只会用来判断两个input节点，否则都return true
     if (a.tag !== 'input') { return true }
     var i;
     var typeA = isDef(i = a.data) && isDef(i = i.attrs) && i.type;
     var typeB = isDef(i = b.data) && isDef(i = i.attrs) && i.type;
+    // isTextInputType = makeMap('text,number,password,search,email,tel,url')
     return typeA === typeB || isTextInputType(typeA) && isTextInputType(typeB)
   }
 
@@ -5989,25 +6015,47 @@
 
     var creatingElmInVPre = 0;
 
+    // createElm(children[i], insertedVnodeQueue, vnode.elm, null, true, children, i)
+    /**
+     * 创建真实的元素节点
+     * @param {*} vnode
+     * @param {*} insertedVnodeQueue
+     * @param {*} parentElm
+     * @param {*} refElm
+     * @param {*} nested
+     * @param {*} ownerArray
+     * @param {*} index
+     */
     function createElm (
       vnode,
       insertedVnodeQueue,
       parentElm,
-      refElm,
+      refElm, // 节点元素引用。parentNode.insertBefore(newNode, referenceNode);的referenceNode
       nested,
-      ownerArray,
-      index
+      ownerArray, // 当前vnode 所属的vnode[]
+      index // index，比如ownerArray[i] === vnode
     ) {
+      var log = function () {
+        var rest = [], len = arguments.length;
+        while ( len-- ) rest[ len ] = arguments[ len ];
+
+        return console.log.apply(console, [ Date.now(), ("createElm-" + (rest.shift())) ].concat( rest ));
+      };
       if (isDef(vnode.elm) && isDef(ownerArray)) {
         // This vnode was used in a previous render!
         // now it's used as a new node, overwriting its elm would cause
         // potential patch errors down the road when it's used as an insertion
         // reference node. Instead, we clone the node on-demand before creating
         // associated DOM element for it.
+        /**
+         * 此vnode在以前的渲染中使用！
+         * 现在它被用作一个新节点，当它被用作插入引用节点时，覆盖它的elm将导致潜在的补丁错误。
+         * 相反，在为节点创建关联的DOM元素之前，我们按需克隆该节点。
+         */
         vnode = ownerArray[index] = cloneVNode(vnode);
       }
 
-      vnode.isRootInsert = !nested; // for transition enter check
+      vnode.isRootInsert = !nested; // for transition enter check（对于转换输入检查）
       if (createComponent(vnode, insertedVnodeQueue, parentElm, refElm)) {
         return
       }
@@ -6015,7 +6063,13 @@
       var data = vnode.data;
       var children = vnode.children;
       var tag = vnode.tag;
+      /**
+       * 1. 创建标签元素
+       * 2. 创建注释元素
+       * 3. 创建文本节点元素
+       */
       if (isDef(tag)) {
+        log('ele:', 0, vnode);
         {
           if (data && data.pre) {
             creatingElmInVPre++;
@@ -6030,8 +6084,12 @@
           }
         }
 
+
         vnode.elm = vnode.ns
+          // 创建带命名空间的元素，
+          // 参考：https://developer.mozilla.org/zh-CN/docs/Web/API/Document/createElementNS
           ? nodeOps.createElementNS(vnode.ns, tag)
+          // 普通元素
           : nodeOps.createElement(tag, vnode);
         setScope(vnode);
 
@@ -6041,6 +6099,8 @@
           if (isDef(data)) {
             invokeCreateHooks(vnode, insertedVnodeQueue);
           }
+          // 将当前元素（vnode.elm）插入的父元素（parentElm），
+          // 如果存在refElm（也是父元素的子元素之一），则将当前元素插入到refElm前面
           insert(parentElm, vnode.elm, refElm);
         }
 
@@ -6048,9 +6108,11 @@
           creatingElmInVPre--;
         }
       } else if (isTrue(vnode.isComment)) {
+        log('ele:', 1);
         vnode.elm = nodeOps.createComment(vnode.text);
         insert(parentElm, vnode.elm, refElm);
       } else {
+        log('ele:', 2, vnode);
         vnode.elm = nodeOps.createTextNode(vnode.text);
         insert(parentElm, vnode.elm, refElm);
       }
@@ -6118,10 +6180,17 @@
       insert(parentElm, vnode.elm, refElm);
     }
 
+    /**
+     * 将子vnode插入到父元素
+     * @param {*} parent
+     * @param {*} elm
+     * @param {*} ref
+     */
     function insert (parent, elm, ref) {
       if (isDef(parent)) {
         if (isDef(ref)) {
           if (nodeOps.parentNode(ref) === parent) {
+            // 在parent这个元素的孩子中，将element插入到ref这个孩子前面
             nodeOps.insertBefore(parent, elm, ref);
           }
         } else {
@@ -6131,14 +6200,27 @@
     }
 
     function createChildren (vnode, children, insertedVnodeQueue) {
+      /**
+       * 就算只有一个子元素，只要是有效的元素，那么children也会是Array
+       * 长度为1的数组 vnode[]
+       */
       if (Array.isArray(children)) {
         {
+          // 判断children的vnode.key是不是有重复
           checkDuplicateKeys(children);
         }
         for (var i = 0; i < children.length; ++i) {
           createElm(children[i], insertedVnodeQueue, vnode.elm, null, true, children, i);
         }
-      } else if (isPrimitive(vnode.text)) {
+      }
+      /**
+       * isPrimitive:
+       * typeof value === 'string' ||
+       * typeof value === 'number' ||
+       * typeof value === 'symbol' ||
+       * typeof value === 'boolean'
+       */
+      else if (isPrimitive(vnode.text)) {
         nodeOps.appendChild(vnode.elm, nodeOps.createTextNode(String(vnode.text)));
       }
     }
@@ -6166,8 +6248,12 @@
     // set scope id attribute for scoped CSS.
     // this is implemented as a special case to avoid the overhead
     // of going through the normal attribute patching process.
+    /**
+     * 为作用域CSS设置作用域id属性。这是作为特殊情况实现的，以避免通过正常的属性修补过程的开销。
+     */
     function setScope (vnode) {
       var i;
+      // fnScopeId，函数的域id
       if (isDef(i = vnode.fnScopeId)) {
         nodeOps.setStyleScope(vnode.elm, i);
       } else {
@@ -6349,6 +6435,7 @@
       }
     }
 
+    // patchVnode(oldVnode, vnode, insertedVnodeQueue, null, null, removeOnly)
     function patchVnode (
       oldVnode,
       vnode,
@@ -6557,9 +6644,9 @@
 
         return console.log.apply(console, [ Date.now(), ("patch-" + (rest.shift())) ].concat( rest ));
       };
-      log('vnode:', vnode);
+      // 1. 删除，没有定义新节点
       if (isUndef(vnode)) {
-        log('num:', 1);
+        // 存在旧节点，则删旧节点
         if (isDef(oldVnode)) { invokeDestroyHook(oldVnode); }
         return
       }
@@ -6567,23 +6654,34 @@
       var isInitialPatch = false;
       var insertedVnodeQueue = [];
 
-      // 新增节点
+      // 2. 初始化，旧节点不存在，而新节点存在，表明是初始化补丁
+      log('isUndef(vnode)', isUndef(vnode), vnode);
+      log('isUndef(oldVnode)', isUndef(oldVnode), oldVnode);
+
+      // 类似有组件的初始化！oldVnode是未定义，vnode存在定义
       if (isUndef(oldVnode)) {
         log('num:', 2);
         // empty mount (likely as component), create new root element
         isInitialPatch = true;
+        // 很具新的虚拟节点创建元素
         createElm(vnode, insertedVnodeQueue);
       }
-      // 更新节点
+      // 3. 新旧节点都存在
       else {
-        log('num:', 3);
-        // 旧节点时有效的元素
+        // vnode是没有nodeType的，oldVnode可能是Vnode或真是的node节点
         var isRealElement = isDef(oldVnode.nodeType);
+        // 3.1 当前层级的新旧节点相同
+        log('oldVnode.tag', oldVnode.tag);
+        log('oldVnode.nodeType', oldVnode.nodeType);
+        // !isRealElement表明是虚拟节点
         if (!isRealElement && sameVnode(oldVnode, vnode)) {
           // patch existing root node
           log('num:', 4);
           patchVnode(oldVnode, vnode, insertedVnodeQueue, null, null, removeOnly);
         } else {
+          // 初次渲染，oldVnode是真实节点
+          // vnode是虚拟节点
+          // 两个几点都存在且不同
           // 新旧元素不相同
           log('num:', 5);
 
