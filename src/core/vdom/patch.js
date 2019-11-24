@@ -73,6 +73,8 @@ export function createPatchFunction (backend) {
 
   const { modules, nodeOps } = backend
 
+  // modules = [attrs, klass, events, domProps, style, transition].concat[ref, directives]
+  // const hooks = ['create', 'activate', 'update', 'remove', 'destroy']
   for (i = 0; i < hooks.length; ++i) {
     cbs[hooks[i]] = []
     for (j = 0; j < modules.length; ++j) {
@@ -81,6 +83,8 @@ export function createPatchFunction (backend) {
       }
     }
   }
+
+  console.log(Date.now(), 'createPatchFunction-cbs:', cbs);
 
   function emptyNodeAt (elm) {
     return new VNode(nodeOps.tagName(elm).toLowerCase(), {}, [], undefined, elm)
@@ -295,7 +299,9 @@ export function createPatchFunction (backend) {
   }
 
   function isPatchable (vnode) {
+    console.log(Date.now(), 'vnode', vnode);
     while (vnode.componentInstance) {
+      console.log(Date.now(), 'vnode.componentInstance', vnode.componentInstance);
       vnode = vnode.componentInstance._vnode
     }
     return isDef(vnode.tag)
@@ -698,7 +704,10 @@ export function createPatchFunction (backend) {
   }
 
   return function patch (oldVnode, vnode, hydrating, removeOnly) {
+    const log = (...rest) => console.log(Date.now(), `patch-${rest.shift()}`, ...rest);
+    log('vnode:', vnode);
     if (isUndef(vnode)) {
+      log('num:', 1);
       if (isDef(oldVnode)) invokeDestroyHook(oldVnode)
       return
     }
@@ -706,25 +715,43 @@ export function createPatchFunction (backend) {
     let isInitialPatch = false
     const insertedVnodeQueue = []
 
+    // 新增节点
     if (isUndef(oldVnode)) {
+      log('num:', 2);
       // empty mount (likely as component), create new root element
       isInitialPatch = true
       createElm(vnode, insertedVnodeQueue)
-    } else {
+    }
+    // 更新节点
+    else {
+      log('num:', 3);
+      // 旧节点时有效的元素
       const isRealElement = isDef(oldVnode.nodeType)
       if (!isRealElement && sameVnode(oldVnode, vnode)) {
         // patch existing root node
+        log('num:', 4);
         patchVnode(oldVnode, vnode, insertedVnodeQueue, null, null, removeOnly)
       } else {
+        // 新旧元素不相同
+        log('num:', 5);
+
         if (isRealElement) {
+          log('num:', 6);
           // mounting to a real element
           // check if this is server-rendered content and if we can perform
           // a successful hydration.
-          if (oldVnode.nodeType === 1 && oldVnode.hasAttribute(SSR_ATTR)) {
+          if (
+            // if nodeType === 1 => 一个 元素 节点，例如 <p> 和 <div>
+            oldVnode.nodeType === 1
+            // export const SSR_ATTR = 'data-server-rendered'
+            && oldVnode.hasAttribute(SSR_ATTR)
+          ) {
+            log('num:', 7);
             oldVnode.removeAttribute(SSR_ATTR)
             hydrating = true
           }
           if (isTrue(hydrating)) {
+            log('num:', 8);
             if (hydrate(oldVnode, vnode, insertedVnodeQueue)) {
               invokeInsertHook(vnode, insertedVnodeQueue, true)
               return oldVnode
@@ -742,10 +769,13 @@ export function createPatchFunction (backend) {
           // create an empty node and replace it
           oldVnode = emptyNodeAt(oldVnode)
         }
+        log('num:', 11);
 
         // replacing existing element
         const oldElm = oldVnode.elm
         const parentElm = nodeOps.parentNode(oldElm)
+
+        log('num:', 12);
 
         // create new node
         createElm(
@@ -754,14 +784,25 @@ export function createPatchFunction (backend) {
           // extremely rare edge case: do not insert if old element is in a
           // leaving transition. Only happens when combining transition +
           // keep-alive + HOCs. (#4590)
+          /**
+           * 极为罕见的边缘情况：如果旧元素处于离开转换中，请不要插入。
+           * 只有在组合transition+keep alive+HOCs时才会发生。（#4590）
+           */
           oldElm._leaveCb ? null : parentElm,
+          // 当前节点的下一个节点，包括文本节点
+          // 在原本的位置插入新节点
           nodeOps.nextSibling(oldElm)
         )
+        log('num:', 13);
 
-        // update parent placeholder node element, recursively
+
+        // update parent placeholder node element, recursively(递归更新父占位符节点元素)
+        log('if (isDef(vnode.parent))', vnode);
         if (isDef(vnode.parent)) {
+          log('if (isDef(vnode.parent))', 11);
           let ancestor = vnode.parent
           const patchable = isPatchable(vnode)
+          log('ancestor', ancestor);
           while (ancestor) {
             for (let i = 0; i < cbs.destroy.length; ++i) {
               cbs.destroy[i](ancestor)
@@ -774,6 +815,9 @@ export function createPatchFunction (backend) {
               // #6513
               // invoke insert hooks that may have been merged by create hooks.
               // e.g. for directives that uses the "inserted" hook.
+              /**
+               * 调用可能已被create hook合并的insert hook。例如，对于使用“inserted”hook的指令。
+               */
               const insert = ancestor.data.hook.insert
               if (insert.merged) {
                 // start at index 1 to avoid re-invoking component mounted hook

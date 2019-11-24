@@ -9,4 +9,6 @@ import platformModules from 'web/runtime/modules/index'
 // built-in modules have been applied.
 const modules = platformModules.concat(baseModules)
 
+console.log(Date.now(), 'modules:', modules);
+
 export const patch: Function = createPatchFunction({ nodeOps, modules })

@@ -7,16 +7,33 @@
   <title>vue-test</title>
 </head>
 <body>
-  <main id="app" class="testArr">
-    <!-- <span>{{ info.name }}</span> -->
-    <!-- <span v-once>{{info.static}}</span> -->
-    <!-- <span>{{computedAttr}}</span> -->
-    <span>{{ price|keep2Point }}</span>
-  </main>
+  <div>
+    <main id="app" class="testArr">
+      <!-- <span>{{ info.name }}</span> -->
+      <!-- <span v-once>{{info.static}}</span> -->
+      <!-- <span>{{computedAttr}}</span> -->
+      <span>{{ price|keep2Point }}</span>
+      <button-counter></button-counter>
+    </main>
+  </div>
 <script src="./seqload.js"></script>
 <script>
   var seqload = new Seqload(['../dist/vue.js']);
   seqload.init(function() {
+    Vue.component('button-counter', {
+      data: function () {
+        return {
+          count: 0
+        }
+      },
+      template: '<button v-on:click="count++" :key="count">You clicked me {{ count }} times.</button>',
+      mounted() {
+        setTimeout(() => {
+          this.count = 10;
+        }, 3 * 1000)
+      }
+    });
+
     var vm = new Vue({
       data: {
         info: {
@@ -64,6 +81,10 @@
           // console.log(computedAttr);
           console.log(Date.now(), 'isDirty:', vm['_watchers'][0].dirty);
         });
+
+        // setTimeout(() => {
+        //   this.price = 200;
+        // }, 3 * 1000)
       },
     }).$mount('#app');
     console.log(vm);
