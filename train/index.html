@@ -14,12 +14,21 @@
       <!-- <span>{{computedAttr}}</span> -->
       <span>{{ price|keep2Point }}</span>
       <button-counter></button-counter>
+      <async-example></async-example>
     </main>
   </div>
 <script src="./seqload.js"></script>
 <script>
   var seqload = new Seqload(['../dist/vue.js']);
   seqload.init(function() {
+    Vue.component('async-example', function (resolve, reject) {
+      setTimeout(function () {
+        // 向 `resolve` 回调传递组件定义
+        resolve({
+          template: '<div>I am async!</div>'
+        })
+      }, 1000)
+    });
     Vue.component('button-counter', {
       data: function () {
         return {
