@@ -19,8 +19,6 @@
       class="class-01"
       :class="class02"
       id="id-01"
-      v-for="(num, idx) of nums"
-      :key="idx"
       @click="test"
       :text="class02"
     >
@@ -29,7 +27,10 @@
       <button-counter></button-counter>
       <!-- <async-example></async-example> -->
       <div>
-        <dl>
+        <dl
+          v-for="(num, idx) of nums"
+          :key="idx"
+        >
           <dt>name:</dt>
           <dd>名字</dd>
         </dl>
