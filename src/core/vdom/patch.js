@@ -421,6 +421,11 @@ export function createPatchFunction (backend) {
     // removeOnly is a special flag used only by <transition-group>
     // to ensure removed elements stay in correct relative positions
     // during leaving transitions
+    /**
+     * removeOnly是一个特殊标志，
+     * 仅由<transition group>使用，
+     * 以确保在离开转换期间移除的元素保持在正确的相对位置
+     */
     const canMove = !removeOnly
 
     if (process.env.NODE_ENV !== 'production') {
@@ -428,44 +433,89 @@ export function createPatchFunction (backend) {
     }
 
     while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
+      /* 1 */
       if (isUndef(oldStartVnode)) {
         oldStartVnode = oldCh[++oldStartIdx] // Vnode has been moved left
-      } else if (isUndef(oldEndVnode)) {
+
+      }
+      /* 2 */
+      else if (isUndef(oldEndVnode)) {
         oldEndVnode = oldCh[--oldEndIdx]
-      } else if (sameVnode(oldStartVnode, newStartVnode)) {
+
+      }
+      /* 3 */
+      else if (sameVnode(oldStartVnode, newStartVnode)) {
         patchVnode(oldStartVnode, newStartVnode, insertedVnodeQueue, newCh, newStartIdx)
         oldStartVnode = oldCh[++oldStartIdx]
         newStartVnode = newCh[++newStartIdx]
-      } else if (sameVnode(oldEndVnode, newEndVnode)) {
+
+      }
+      /* 4 */
+      else if (sameVnode(oldEndVnode, newEndVnode)) {
         patchVnode(oldEndVnode, newEndVnode, insertedVnodeQueue, newCh, newEndIdx)
         oldEndVnode = oldCh[--oldEndIdx]
         newEndVnode = newCh[--newEndIdx]
-      } else if (sameVnode(oldStartVnode, newEndVnode)) { // Vnode moved right
+
+      } 
+      /* 5 */
+      else if (sameVnode(oldStartVnode, newEndVnode)) { // Vnode moved right
         patchVnode(oldStartVnode, newEndVnode, insertedVnodeQueue, newCh, newEndIdx)
+        // canMove && 在parentElm的nodeOps.nextSibling(oldEndVnode.elm)前面插入oldStartVnode.elm
         canMove && nodeOps.insertBefore(parentElm, oldStartVnode.elm, nodeOps.nextSibling(oldEndVnode.elm))
         oldStartVnode = oldCh[++oldStartIdx]
         newEndVnode = newCh[--newEndIdx]
-      } else if (sameVnode(oldEndVnode, newStartVnode)) { // Vnode moved left
+
+      }
+      /* 6 */
+      else if (sameVnode(oldEndVnode, newStartVnode)) { // Vnode moved left
         patchVnode(oldEndVnode, newStartVnode, insertedVnodeQueue, newCh, newStartIdx)
         canMove && nodeOps.insertBefore(parentElm, oldEndVnode.elm, oldStartVnode.elm)
         oldEndVnode = oldCh[--oldEndIdx]
         newStartVnode = newCh[++newStartIdx]
-      } else {
-        if (isUndef(oldKeyToIdx)) oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx)
+
+      } 
+      /* 7 */
+      else {
+        /* 7.1 */
+        // 只会执行一次，第一次定义映射表
+        if (isUndef(oldKeyToIdx)) {
+          // 创建对象映射表，children.key => children.i, i ∈ [oldStartIdx, oldEndIdx]
+          oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx)
+        }
+        /* 7.2 */
+        // 定义key，直接在名射表找，时间复杂度: O(1)
+        // 没有定义key，用新vnode与旧vnode数组比对，时间复杂度：O(n)
+        // const isDef = (v) => v !== undefined && v !== null
         idxInOld = isDef(newStartVnode.key)
           ? oldKeyToIdx[newStartVnode.key]
+          // 返回oldCh中与newStartVnode相同（ sameVnode(newStartVnode, oldCh[itIdx]) ）节点(即isDef(oldCh[itIdx].key) 同样是false)的index
           : findIdxInOld(newStartVnode, oldCh, oldStartIdx, oldEndIdx)
+
+        /* 7.3 */
+        // 在旧虚拟节点中不存在新节点，无法复用旧元素
         if (isUndef(idxInOld)) { // New element
           createElm(newStartVnode, insertedVnodeQueue, parentElm, oldStartVnode.elm, false, newCh, newStartIdx)
-        } else {
+
+        }
+        /* 7.4 */
+        // 在旧虚拟节点中存在新节点
+        else {
+          /* 7.4.1 */
           vnodeToMove = oldCh[idxInOld]
+          // 保证节点的key和虚拟节点都相同（ oldKeyToIdx[newStartVnode.key] 获取的idxInOld，指向
+          // 的虚拟节点可能与newStartVnode节点不一样(!sameVnode) ）
           if (sameVnode(vnodeToMove, newStartVnode)) {
             patchVnode(vnodeToMove, newStartVnode, insertedVnodeQueue, newCh, newStartIdx)
             oldCh[idxInOld] = undefined
             canMove && nodeOps.insertBefore(parentElm, vnodeToMove.elm, oldStartVnode.elm)
-          } else {
+            
+          }
+          /* 7.4.2 */
+          else {
             // same key but different element. treat as new element
+            // key相同但虚拟节点不同，newStartVnode当做新元素创建
             createElm(newStartVnode, insertedVnodeQueue, parentElm, oldStartVnode.elm, false, newCh, newStartIdx)
+            
           }
         }
         newStartVnode = newCh[++newStartIdx]
