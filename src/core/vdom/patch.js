@@ -575,6 +575,7 @@ export function createPatchFunction (backend) {
     }
 
     log('vnode.elm', vnode.elm);
+    // 补丁的重要环节：将旧vnode的elm复用到新vnode
     const elm = vnode.elm = oldVnode.elm
 
     if (isTrue(oldVnode.isAsyncPlaceholder)) {
@@ -605,36 +606,49 @@ export function createPatchFunction (backend) {
 
     let i
     const data = vnode.data
+    // 调用打补丁前的钩子
     if (isDef(data) && isDef(i = data.hook) && isDef(i = i.prepatch)) {
       i(oldVnode, vnode)
     }
 
     const oldCh = oldVnode.children
     const ch = vnode.children
+    // 调用打补丁的update-hooks钩子
     if (isDef(data) && isPatchable(vnode)) {
       for (i = 0; i < cbs.update.length; ++i) cbs.update[i](oldVnode, vnode)
       if (isDef(i = data.hook) && isDef(i = i.update)) i(oldVnode, vnode)
     }
+    // 没有文本，即是还有子节点等情况
     if (isUndef(vnode.text)) {
+      // 新旧vnode都有children
       if (isDef(oldCh) && isDef(ch)) {
         if (oldCh !== ch) updateChildren(elm, oldCh, ch, insertedVnodeQueue, removeOnly)
-      } else if (isDef(ch)) {
+      }
+      // 旧vnode没有children，可能是文本；新vnode有子节点
+      else if (isDef(ch)) {
         if (process.env.NODE_ENV !== 'production') {
           checkDuplicateKeys(ch)
         }
         if (isDef(oldVnode.text)) nodeOps.setTextContent(elm, '')
         addVnodes(elm, null, ch, 0, ch.length - 1, insertedVnodeQueue)
-      } else if (isDef(oldCh)) {
+      }
+      // 新vnode没有子节点，但旧vnode有，即是删除操作
+      else if (isDef(oldCh)) {
         removeVnodes(oldCh, 0, oldCh.length - 1)
-      } else if (isDef(oldVnode.text)) {
+      }
+      // 新旧vnode都没有children，并且旧vnode是文本节点
+      else if (isDef(oldVnode.text)) {
         nodeOps.setTextContent(elm, '')
       }
-    } else if (oldVnode.text !== vnode.text) {
+    } 
+    // 当前节点是文本节点，已经是最后一个后代
+    else if (oldVnode.text !== vnode.text) {
       nodeOps.setTextContent(elm, vnode.text)
     }
+    // 调用打包的钩子：postpatch
     if (isDef(data)) {
       if (isDef(i = data.hook) && isDef(i = i.postpatch)) i(oldVnode, vnode)
-    } 
+    }
   }
 
   function invokeInsertHook (vnode, queue, initial) {
