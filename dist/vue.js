@@ -4146,7 +4146,7 @@
         updateComponent = function () {
           l('render-updateComponent');
           var renderVNode =  vm._render() ;
-          l('renderVNode:', renderVNode);
+          l('renderVNode:', JSON.stringify(renderVNode.data));
           vm._update(renderVNode, hydrating);
         };
       }
@@ -6317,7 +6317,13 @@
         /* 5 */
         else if (sameVnode(oldStartVnode, newEndVnode)) { // Vnode moved right
           patchVnode(oldStartVnode, newEndVnode, insertedVnodeQueue, newCh, newEndIdx);
+          /**
+           * Node.insertBefore() 方法在参考节点之前插入一个拥有指定父节点的子节点。
+           * 如果给定的子节点是对文档中现有节点的引用，insertBefore() 会将其从当前位置移动到新位置
+           */
           // canMove && 在parentElm的nodeOps.nextSibling(oldEndVnode.elm)前面插入oldStartVnode.elm
+          // 换言之，在 oldEndVnode.elm 前面插入 oldStartVnode.elm
+          // 旧children的 头部真实元素 移动到 尾部真实元素的后面
           canMove && nodeOps.insertBefore(parentElm, oldStartVnode.elm, nodeOps.nextSibling(oldEndVnode.elm));
           oldStartVnode = oldCh[++oldStartIdx];
           newEndVnode = newCh[--newEndIdx];
@@ -6326,6 +6332,7 @@
         /* 6 */
         else if (sameVnode(oldEndVnode, newStartVnode)) { // Vnode moved left
           patchVnode(oldEndVnode, newStartVnode, insertedVnodeQueue, newCh, newStartIdx);
+          // 将旧children的尾部真实元素移动到头部真实元素的后面
           canMove && nodeOps.insertBefore(parentElm, oldEndVnode.elm, oldStartVnode.elm);
           oldEndVnode = oldCh[--oldEndIdx];
           newStartVnode = newCh[++newStartIdx];
@@ -6436,10 +6443,10 @@
         vnode = ownerArray[index] = cloneVNode(vnode);
       }
 
-      log('vnode.elm', vnode.elm);
+      log('vnode.elm', vnode);
       // 补丁的重要环节：将旧vnode的elm复用到新vnode
       var elm = vnode.elm = oldVnode.elm;
-
+      
       if (isTrue(oldVnode.isAsyncPlaceholder)) {
         if (isDef(vnode.asyncFactory.resolved)) {
           hydrate(oldVnode.elm, vnode, insertedVnodeQueue);
@@ -6469,6 +6476,7 @@
       var i;
       var data = vnode.data;
       // 调用打补丁前的钩子
+      // 组件才会有此钩子
       if (isDef(data) && isDef(i = data.hook) && isDef(i = i.prepatch)) {
         i(oldVnode, vnode);
       }
@@ -6477,7 +6485,10 @@
       var ch = vnode.children;
       // 调用打补丁的update-hooks钩子
       if (isDef(data) && isPatchable(vnode)) {
-        for (i = 0; i < cbs.update.length; ++i) { cbs.update[i](oldVnode, vnode); }
+        console.log(12321312, cbs[cbs.update.length - 6]);
+        for (i = 0; i < cbs.update.length; ++i) {
+          cbs.update[i](oldVnode, vnode);
+        }
         if (isDef(i = data.hook) && isDef(i = i.update)) { i(oldVnode, vnode); }
       }
       // 没有文本，即是还有子节点等情况
@@ -6489,9 +6500,11 @@
         // 旧vnode没有children，可能是文本；新vnode有子节点
         else if (isDef(ch)) {
           {
+            // 检测children中的vnode.key有没有重复定义
             checkDuplicateKeys(ch);
           }
           if (isDef(oldVnode.text)) { nodeOps.setTextContent(elm, ''); }
+          // 遍历ch，调用createElement创建元素，并添加到elm
           addVnodes(elm, null, ch, 0, ch.length - 1, insertedVnodeQueue);
         }
         // 新vnode没有子节点，但旧vnode有，即是删除操作
@@ -6502,7 +6515,7 @@
         else if (isDef(oldVnode.text)) {
           nodeOps.setTextContent(elm, '');
         }
-      } 
+      }
       // 当前节点是文本节点，已经是最后一个后代
       else if (oldVnode.text !== vnode.text) {
         nodeOps.setTextContent(elm, vnode.text);
@@ -6551,6 +6564,7 @@
           return false
         }
       }
+      console.log(222333444);
       if (isDef(data)) {
         if (isDef(i = data.hook) && isDef(i = i.init)) { i(vnode, true /* hydrating */); }
         if (isDef(i = vnode.componentInstance)) {
@@ -6670,7 +6684,7 @@
         var isRealElement = isDef(oldVnode.nodeType);
         if (!isRealElement && sameVnode(oldVnode, vnode)) {
           // patch existing root node
-          log('num:', 4, vnode.elm);
+          log('num:', 4, vnode);
           patchVnode(oldVnode, vnode, insertedVnodeQueue, null, null, removeOnly);
         } else {
 
@@ -6914,7 +6928,14 @@
   /*  */
 
   function updateAttrs (oldVnode, vnode) {
+    var log = function () {
+      var rest = [], len = arguments.length;
+      while ( len-- ) rest[ len ] = arguments[ len ];
+
+      return console.log.apply(console, [ Date.now(), ("updateAttrs-" + (rest.shift())) ].concat( rest ));
+    };
     var opts = vnode.componentOptions;
+    log('opts', opts);
     if (isDef(opts) && opts.Ctor.options.inheritAttrs === false) {
       return
     }
@@ -6955,6 +6976,7 @@
   }
 
   function setAttr (el, key, value) {
+    console.log('invoke-setAttr-fn');
     if (el.tagName.indexOf('-') > -1) {
       baseSetAttr(el, key, value);
     } else if (isBooleanAttr(key)) {
@@ -7016,6 +7038,12 @@
   /*  */
 
   function updateClass (oldVnode, vnode) {
+    var log = function () {
+      var rest = [], len = arguments.length;
+      while ( len-- ) rest[ len ] = arguments[ len ];
+
+      return console.log.apply(console, [ Date.now(), ("updateClass-" + (rest.shift())) ].concat( rest ));
+    };
     var el = vnode.elm;
     var data = vnode.data;
     var oldData = oldVnode.data;
@@ -7033,6 +7061,8 @@
 
     var cls = genClassForVnode(vnode);
 
+    log('cls', cls);
+
     // handle transition classes
     var transitionClass = el._transitionClasses;
     if (isDef(transitionClass)) {
@@ -7040,6 +7070,7 @@
     }
 
     // set the class
+    log('cls/el._prevClass', cls, el._prevClass);
     if (cls !== el._prevClass) {
       el.setAttribute('class', cls);
       el._prevClass = cls;

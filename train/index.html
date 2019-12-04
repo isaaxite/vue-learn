@@ -7,7 +7,7 @@
   <title>vue-test</title>
 </head>
 <body>
-  <main id="app" class="testArr">
+  <main id="app" :class="testArr" :data-id="dataId">
     <!-- <span>{{ info.name }}</span> -->
     <!-- <span v-once>{{info.static}}</span> -->
     <!-- <span>{{computedAttr}}</span> -->
@@ -24,7 +24,7 @@
     >
       {{ price|keep2Point }}
       <strong>asdasdsa</strong>
-      <button-counter></button-counter>
+      <!-- <button-counter></button-counter> -->
       <!-- <async-example></async-example> -->
       <div>
         <dl
@@ -60,6 +60,7 @@
 
     var vm = new Vue({
       data: {
+        testArr: 'testArr',
         info: {
           static: 'static render',
           name: 'isaac',
@@ -68,7 +69,9 @@
         nums: [1,2,3],
         count: 1,
         price: 100,
-        class02: 'class-02'
+        class02: 'class-02',
+        testArr: 'testArr',
+        dataId: 1,
       },
       filters: {
         keep2Point(age) {
@@ -110,7 +113,13 @@
         setTimeout(() => {
           console.log('\n\n\n\n');
           this.nums.push(Date.now());
+          this.testArr += '1';
+<<<<<<< 58c944667546ba9c1a815c343b26650ab87d6f01
+          this.dataId += 2;
         }, 3 * 1000)
+=======
+        }, 1 * 1000)
+>>>>>>> [docs] 分析交叉比对后，移动旧vnode
       },
 
       methods: {

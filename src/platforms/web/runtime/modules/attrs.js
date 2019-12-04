@@ -19,7 +19,9 @@ import {
 } from 'web/util/index'
 
 function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
+  const log = (...rest) => console.log(Date.now(), `updateAttrs-${rest.shift()}`, ...rest);
   const opts = vnode.componentOptions
+  log('opts', opts);
   if (isDef(opts) && opts.Ctor.options.inheritAttrs === false) {
     return
   }
@@ -60,6 +62,8 @@ function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
 }
 
 function setAttr (el: Element, key: string, value: any) {
+  const log = (...rest) => console.log(Date.now(), `updateAttrs-${rest.shift()}`, ...rest);
+  console.log('invoke-setAttr-fn');
   if (el.tagName.indexOf('-') > -1) {
     baseSetAttr(el, key, value)
   } else if (isBooleanAttr(key)) {

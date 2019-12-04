@@ -192,7 +192,7 @@ export function lifecycleMixin (Vue: Class<Component>) {
         l('render-updateComponent');
         const isUse = true;
         const renderVNode = isUse ? vm._render() : new VNode();
-        l('renderVNode:', renderVNode);
+        l('renderVNode:', JSON.stringify(renderVNode.data));
         vm._update(renderVNode, hydrating)
       }
     }
