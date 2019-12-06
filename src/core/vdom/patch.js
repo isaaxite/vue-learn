@@ -167,6 +167,7 @@ export function createPatchFunction (backend) {
         }
       }
 
+      // const elm = document.createElement(tagName)
       vnode.elm = vnode.ns
         ? nodeOps.createElementNS(vnode.ns, tag)
         : nodeOps.createElement(tag, vnode)
@@ -346,6 +347,18 @@ export function createPatchFunction (backend) {
 
   function addVnodes (parentElm, refElm, vnodes, startIdx, endIdx, insertedVnodeQueue) {
     for (; startIdx <= endIdx; ++startIdx) {
+      /**
+       * (
+       *   vnode: VNode,
+       *   insertedVnodeQueue: VNode[],
+       *   parentElm: Element,
+       *   refElm: Element,
+       *   nested: Boolean,
+       *   ownerArray: VNode[],
+       *   index: Number
+       * ) => void
+       * */
+      // 创建 vnodes[startIdx] 对应的elm，将elm插入到parentElm的refElm的前面（如果refElm不存在即插入到parentElm的最后）
       createElm(vnodes[startIdx], insertedVnodeQueue, parentElm, refElm, false, vnodes, startIdx)
     }
   }
@@ -456,7 +469,7 @@ export function createPatchFunction (backend) {
         oldEndVnode = oldCh[--oldEndIdx]
         newEndVnode = newCh[--newEndIdx]
 
-      } 
+      }
       /* 5 */
       else if (sameVnode(oldStartVnode, newEndVnode)) { // Vnode moved right
         patchVnode(oldStartVnode, newEndVnode, insertedVnodeQueue, newCh, newEndIdx)
@@ -480,7 +493,7 @@ export function createPatchFunction (backend) {
         oldEndVnode = oldCh[--oldEndIdx]
         newStartVnode = newCh[++newStartIdx]
 
-      } 
+      }
       /* 7 */
       else {
         /* 7.1 */
@@ -500,6 +513,14 @@ export function createPatchFunction (backend) {
 
         /* 7.3 */
         // 在旧虚拟节点中不存在新节点，无法复用旧元素
+        /**
+         * [ 1 ] [ 2 ] [ 3 ] [ 4 ] [ 5 ]
+         * [ 1 ] [ 2 ] [2.5] [ 3 ] [ 4 ] [ 5 ]
+         * [2.5]就是插入的，且就children中没有与之“相同”的vnode
+         * 目前 newStartIdx = oldStartIdx = 2
+         * 那么现在需要做的是：a.创建一个与[2.5]对应的真实元素；b.将元素插入到 [ 2 ] 后面 [ 3 ]前面
+         * nodeOps.insertBefore(parentElm, newElm, oldStartVnode.elm)
+         */
         if (isUndef(idxInOld)) { // New element
           createElm(newStartVnode, insertedVnodeQueue, parentElm, oldStartVnode.elm, false, newCh, newStartIdx)
 
@@ -515,21 +536,31 @@ export function createPatchFunction (backend) {
             patchVnode(vnodeToMove, newStartVnode, insertedVnodeQueue, newCh, newStartIdx)
             oldCh[idxInOld] = undefined
             canMove && nodeOps.insertBefore(parentElm, vnodeToMove.elm, oldStartVnode.elm)
-            
+
           }
           /* 7.4.2 */
           else {
             // same key but different element. treat as new element
             // key相同但虚拟节点不同，newStartVnode当做新元素创建
             createElm(newStartVnode, insertedVnodeQueue, parentElm, oldStartVnode.elm, false, newCh, newStartIdx)
-            
+
           }
         }
         newStartVnode = newCh[++newStartIdx]
       }
     }
+
+    // 因为 newStartIdx 和 oldStartIdx 是同步向前移动的，
+    // 所以， 如果 oldStartIdx > oldEndIdx 则是新children的vnode个数比旧的多，那就是新增
     if (oldStartIdx > oldEndIdx) {
-      refElm = isUndef(newCh[newEndIdx + 1]) ? null : newCh[newEndIdx + 1].elm
+      // 会用调用node.insertBefore插入新元素，现在就是找引用元素，在refElm前面插入新元素
+      refElm = isUndef(newCh[newEndIdx + 1])
+        // 新的children没有新增元素
+        ? null
+        // 新的children新增了元素
+        : newCh[newEndIdx + 1].elm
+
+      // 循环调用 createElm
       addVnodes(parentElm, refElm, newCh, newStartIdx, newEndIdx, insertedVnodeQueue)
     } else if (newStartIdx > newEndIdx) {
       removeVnodes(oldCh, oldStartIdx, oldEndIdx)
@@ -584,7 +615,7 @@ export function createPatchFunction (backend) {
     log('vnode.elm', vnode);
     // 补丁的重要环节：将旧vnode的elm复用到新vnode
     const elm = vnode.elm = oldVnode.elm
-    
+
     if (isTrue(oldVnode.isAsyncPlaceholder)) {
       if (isDef(vnode.asyncFactory.resolved)) {
         hydrate(oldVnode.elm, vnode, insertedVnodeQueue)
